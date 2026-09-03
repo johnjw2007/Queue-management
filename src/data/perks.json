@@ -1,0 +1,38 @@
+[
+  {
+    "id": "PRK-001",
+    "title": "Canteen Express Pass",
+    "category": "Dining",
+    "pointsCost": 15,
+    "description": "Skip the main lunch line once a week using the QueueSense Priority Lane.",
+    "icon": "Utensils",
+    "available": true
+  },
+  {
+    "id": "PRK-002",
+    "title": "Library Extended Borrowing",
+    "category": "Academic",
+    "pointsCost": 20,
+    "description": "Keep up to 5 books for an extra 14 days with zero late fee charges.",
+    "icon": "BookOpen",
+    "available": true
+  },
+  {
+    "id": "PRK-003",
+    "title": "Campus Parking Spot Reservation",
+    "category": "Campus Life",
+    "pointsCost": 30,
+    "description": "Reserved front-row parking pass for 1 full week.",
+    "icon": "Car",
+    "available": true
+  },
+  {
+    "id": "PRK-004",
+    "title": "Campus Coffee Voucher",
+    "category": "Dining",
+    "pointsCost": 10,
+    "description": "Free artisanal coffee or tea at the Central Campus Cafe.",
+    "icon": "Coffee",
+    "available": true
+  }
+]

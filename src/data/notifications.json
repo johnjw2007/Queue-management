@@ -1,0 +1,34 @@
+[
+  {
+    "id": "NOTIF-101",
+    "title": "🎉 Monthly Reward Eligibility Confirmed",
+    "message": "Congratulations! Your Queue Score is 94 (>90 threshold). You are eligible for the 50 Point monthly reward allowance.",
+    "time": "10 minutes ago",
+    "type": "reward",
+    "isRead": false
+  },
+  {
+    "id": "NOTIF-102",
+    "title": "✅ Queue Maintained at Canteen",
+    "message": "AI Camera #01 verified 100% line compliance during lunch queue. +2 Queue Points awarded.",
+    "time": "2 hours ago",
+    "type": "alert",
+    "isRead": false
+  },
+  {
+    "id": "NOTIF-103",
+    "title": "ℹ️ Weekly Score Audit Completed",
+    "message": "Your score for the week ending July 24 is calculated as 94/100. Zero weekly deductions recorded.",
+    "time": "1 day ago",
+    "type": "info",
+    "isRead": true
+  },
+  {
+    "id": "NOTIF-104",
+    "title": "⚠️ Campus Queue Rule Reminder",
+    "message": "A weekly penalty of -15 points is applied if cut-in or overcrowding violations are flagged by cameras.",
+    "time": "3 days ago",
+    "type": "penalty",
+    "isRead": true
+  }
+]

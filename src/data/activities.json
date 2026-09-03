@@ -1,0 +1,57 @@
+[
+  {
+    "id": "ACT-001",
+    "studentId": "STU1001",
+    "timestamp": "Today, 12:45 PM",
+    "location": "Main Canteen Queue 1",
+    "type": "maintained",
+    "title": "Queue Maintained",
+    "description": "Maintained proper 1-meter distancing and single-file line discipline during peak lunch hours.",
+    "scoreDelta": "+2 Pts",
+    "status": "success"
+  },
+  {
+    "id": "ACT-002",
+    "studentId": "STU1001",
+    "timestamp": "Yesterday, 04:15 PM",
+    "location": "Central Library Counter",
+    "type": "maintained",
+    "title": "Queue Maintained",
+    "description": "Waited patiently in line for book issue counter.",
+    "scoreDelta": "+1 Pt",
+    "status": "success"
+  },
+  {
+    "id": "ACT-003",
+    "studentId": "STU1001",
+    "timestamp": "Monday, 09:30 AM",
+    "location": "Fee Payment Counter 2",
+    "type": "reward_update",
+    "title": "Monthly Reward Points Updated",
+    "description": "Weekly compliance verification completed. Earned 10 bonus reward points.",
+    "scoreDelta": "+10 Pts",
+    "status": "info"
+  },
+  {
+    "id": "ACT-004",
+    "studentId": "STU1002",
+    "timestamp": "July 22, 01:10 PM",
+    "location": "Food Court Queue 3",
+    "type": "violation",
+    "title": "Queue Cut-In Detected",
+    "description": "AI Camera #04 detected line jumping without turn.",
+    "scoreDelta": "-15 Pts",
+    "status": "warning"
+  },
+  {
+    "id": "ACT-005",
+    "studentId": "STU1001",
+    "timestamp": "July 20, 11:00 AM",
+    "location": "Auditorium Entry Gate",
+    "type": "maintained",
+    "title": "Exemplary Queue Conduct",
+    "description": "Helped maintain orderly flow during event registration.",
+    "scoreDelta": "+5 Pts",
+    "status": "success"
+  }
+]

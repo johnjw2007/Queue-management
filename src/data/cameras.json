@@ -1,0 +1,58 @@
+[
+  {
+    "id": "CAM-01",
+    "name": "Camera 01 (Lift 1 AI Vision Node)",
+    "location": "Main Entrance Lift 1 Lobby (Active Webcam Node)",
+    "peopleCount": 1,
+    "status": "Normal",
+    "queueStatus": "Proper Queue",
+    "confidence": 99.2,
+    "fps": 30,
+    "isOnline": true,
+    "lastIncident": "None today",
+    "virtualLineActive": true,
+    "streamType": "webcam"
+  },
+  {
+    "id": "CAM-02",
+    "name": "Camera 02 (Lift 2 Ground Floor)",
+    "location": "Lift 2 Core Tower",
+    "peopleCount": 0,
+    "status": "Normal",
+    "queueStatus": "Proper Queue",
+    "confidence": 97.4,
+    "fps": 25,
+    "isOnline": true,
+    "lastIncident": "None today",
+    "virtualLineActive": true,
+    "streamType": "ip_standby"
+  },
+  {
+    "id": "CAM-03",
+    "name": "Camera 03 (Main Food Court Canteen)",
+    "location": "Food Court Counter Area",
+    "peopleCount": 0,
+    "status": "Normal",
+    "queueStatus": "Proper Queue",
+    "confidence": 98.5,
+    "fps": 30,
+    "isOnline": true,
+    "lastIncident": "None today",
+    "virtualLineActive": true,
+    "streamType": "ip_standby"
+  },
+  {
+    "id": "CAM-04",
+    "name": "Camera 04 (Central Library Circulation)",
+    "location": "Central Library Entry Gate",
+    "peopleCount": 0,
+    "status": "Normal",
+    "queueStatus": "Proper Queue",
+    "confidence": 96.8,
+    "fps": 25,
+    "isOnline": true,
+    "lastIncident": "None today",
+    "virtualLineActive": true,
+    "streamType": "ip_standby"
+  }
+]

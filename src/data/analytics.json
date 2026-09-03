@@ -1,0 +1,30 @@
+{
+  "dailyViolations": [
+    { "day": "Mon", "violations": 4, "resolved": 4 },
+    { "day": "Tue", "violations": 8, "resolved": 7 },
+    { "day": "Wed", "violations": 3, "resolved": 3 },
+    { "day": "Thu", "violations": 6, "resolved": 5 },
+    { "day": "Fri", "violations": 2, "resolved": 2 },
+    { "day": "Sat", "violations": 1, "resolved": 1 },
+    { "day": "Sun", "violations": 0, "resolved": 0 }
+  ],
+  "scoreTrend": [
+    { "week": "W1", "score": 86, "eligiblePct": 74 },
+    { "week": "W2", "score": 88, "eligiblePct": 79 },
+    { "week": "W3", "score": 91, "eligiblePct": 85 },
+    { "week": "W4", "score": 94, "eligiblePct": 91 }
+  ],
+  "rewardDistribution": [
+    { "name": "Eligible (>90)", "value": 720, "color": "#22C55E" },
+    { "name": "Good Standby (80-89)", "value": 210, "color": "#2563EB" },
+    { "name": "Under Penalty (<80)", "value": 70, "color": "#EF4444" }
+  ],
+  "deptPerformance": [
+    { "subject": "Computer Sci.", "score": 95, "fullMark": 100 },
+    { "subject": "Electronics", "score": 89, "fullMark": 100 },
+    { "subject": "Mechanical", "score": 84, "fullMark": 100 },
+    { "subject": "Civil Eng.", "score": 78, "fullMark": 100 },
+    { "subject": "Info Tech", "score": 92, "fullMark": 100 },
+    { "subject": "Biotech", "score": 90, "fullMark": 100 }
+  ]
+}

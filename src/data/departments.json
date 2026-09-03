@@ -1,0 +1,14 @@
+[
+  { "id": "DEPT_CS", "name": "Computer Science & Engineering", "code": "CSE" },
+  { "id": "DEPT_IT", "name": "Information Technology", "code": "IT" },
+  { "id": "DEPT_AI", "name": "Artificial Intelligence & Data Science", "code": "AI & DS" },
+  { "id": "DEPT_EC", "name": "Electronics & Communication Engineering", "code": "ECE" },
+  { "id": "DEPT_EE", "name": "Electrical & Electronics Engineering", "code": "EEE" },
+  { "id": "DEPT_BT", "name": "Biotechnology", "code": "BIO TECH" },
+  { "id": "DEPT_BM", "name": "Biomedical Engineering", "code": "BME" },
+  { "id": "DEPT_ME", "name": "Mechanical Engineering", "code": "MECH" },
+  { "id": "DEPT_CE", "name": "Civil Engineering", "code": "CIVIL" },
+  { "id": "DEPT_CH", "name": "Chemical Engineering", "code": "CHEM" },
+  { "id": "DEPT_RA", "name": "Robotics & Automation", "code": "ROBOTICS" },
+  { "id": "DEPT_MBA", "name": "Management Studies", "code": "MBA" }
+]

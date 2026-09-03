@@ -1,0 +1,38 @@
+[
+  {
+    "id": "REP-2026-07-24",
+    "title": "Daily Queue Discipline Audit",
+    "period": "Daily",
+    "date": "July 24, 2026",
+    "totalStudentsTracked": 1420,
+    "violationsLogged": 14,
+    "complianceRate": "98.2%",
+    "avgScore": 91.5,
+    "status": "Ready",
+    "fileSize": "1.4 MB"
+  },
+  {
+    "id": "REP-2026-W29",
+    "title": "Weekly Compliance & Reward Report",
+    "period": "Weekly",
+    "date": "July 17 - July 24, 2026",
+    "totalStudentsTracked": 3850,
+    "violationsLogged": 62,
+    "complianceRate": "96.7%",
+    "avgScore": 89.2,
+    "status": "Ready",
+    "fileSize": "4.8 MB"
+  },
+  {
+    "id": "REP-2026-M06",
+    "title": "Monthly Campus Discipline Summary",
+    "period": "Monthly",
+    "date": "June 2026",
+    "totalStudentsTracked": 4200,
+    "violationsLogged": 180,
+    "complianceRate": "95.4%",
+    "avgScore": 88.7,
+    "status": "Archived",
+    "fileSize": "12.1 MB"
+  }
+]
