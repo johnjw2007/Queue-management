@@ -28,6 +28,10 @@ import {
   buildFaceMatcher,
   detectAndMatchFaces,
 } from '../../utils/faceRecognition';
+import {
+  startBroadcasting,
+  connectToBroadcast,
+} from '../../utils/webrtcStream';
 
 export function LiveCameraCard({ camera, onTriggerViolation, isDisplayMode = false }) {
   const { students, updateStudent, saveFaceDescriptor, recordViolation, getCameraZoneConfig, updateZoneConfig } = useStudentDB();
@@ -35,6 +39,8 @@ export function LiveCameraCard({ camera, onTriggerViolation, isDisplayMode = fal
 
   // ─── State ────────────────────────────────────────────────────────────────
   const [useWebcam, setUseWebcam] = useState(false);
+  const [isReceivingStream, setIsReceivingStream] = useState(false);
+  const [viewerCount, setViewerCount] = useState(0);
   const [showBoxes, setShowBoxes] = useState(true);
   const [showQueueZone, setShowQueueZone] = useState(true);
   const [activeCamStatus, setActiveCamStatus] = useState(camera?.queueStatus || 'Proper Queue');
@@ -64,6 +70,8 @@ export function LiveCameraCard({ camera, onTriggerViolation, isDisplayMode = fal
   const canvasRef = useRef(null);
   const faceCanvasRef = useRef(null);
   const faceLoopRef = useRef(null);
+  const broadcasterRef = useRef(null);
+  const viewerRef = useRef(null);
   
   const violationTimersRef = useRef({});
   const penalizedRecentlyRef = useRef({});
@@ -79,14 +87,13 @@ export function LiveCameraCard({ camera, onTriggerViolation, isDisplayMode = fal
 
   // ─── Auto-encode student face photos into descriptors ─────────────────────
   useEffect(() => {
-    if (!faceModelsReady) return;
-    const needsEncoding = students.filter(s => (s.facePhoto || s.avatar) && !s.faceDescriptor);
-    if (needsEncoding.length === 0) return;
-
+    if (!faceModelsReady || students.length === 0) return;
     (async () => {
-      for (let i = 0; i < needsEncoding.length; i++) {
-        const stu = needsEncoding[i];
-        setEncodingProgress(`Encoding face for ${stu.name} (${i + 1}/${needsEncoding.length})...`);
+      const needEncoding = students.filter(s => (s.facePhoto || s.avatar) && !s.faceDescriptor);
+      if (needEncoding.length === 0) return;
+
+      setEncodingProgress(`Encoding ${needEncoding.length} student biometric photo(s)...`);
+      for (const stu of needEncoding) {
         try {
           const desc = await computeDescriptorFromSrc(stu.facePhoto || stu.avatar);
           if (desc) {
@@ -98,7 +105,7 @@ export function LiveCameraCard({ camera, onTriggerViolation, isDisplayMode = fal
     })();
   }, [faceModelsReady, students.length]);
 
-  // ─── Webcam Stream Handler ────────────────────────────────────────────────
+  // ─── Webcam Stream & WebRTC Broadcaster Handler ───────────────────────────
   useEffect(() => {
     let stream = null;
     if (useWebcam) {
@@ -111,13 +118,30 @@ export function LiveCameraCard({ camera, onTriggerViolation, isDisplayMode = fal
             videoRef.current.play();
           }
           setWebcamError(null);
+          setIsReceivingStream(false);
+
+          // Start broadcasting stream to other devices
+          try {
+            broadcasterRef.current = startBroadcasting(
+              camera?.id || 'CAM-01',
+              stream,
+              (count) => setViewerCount(count)
+            );
+          } catch (e) {
+            console.warn('Broadcaster init error:', e);
+          }
         })
         .catch(() => {
           setWebcamError('Cannot access webcam. Check browser camera permissions.');
           setUseWebcam(false);
         });
     } else {
-      if (videoRef.current?.srcObject) {
+      if (broadcasterRef.current) {
+        broadcasterRef.current.stop();
+        broadcasterRef.current = null;
+        setViewerCount(0);
+      }
+      if (videoRef.current?.srcObject && !isReceivingStream) {
         videoRef.current.srcObject.getTracks().forEach(t => t.stop());
         videoRef.current.srcObject = null;
       }
@@ -125,7 +149,43 @@ export function LiveCameraCard({ camera, onTriggerViolation, isDisplayMode = fal
       stopFaceDetectionLoop();
     }
     return () => { if (stream) stream.getTracks().forEach(t => t.stop()); };
-  }, [useWebcam]);
+  }, [useWebcam, camera?.id]);
+
+  // ─── Auto-listen for incoming WebRTC live stream from Broadcaster if not using webcam ─
+  useEffect(() => {
+    if (useWebcam) {
+      if (viewerRef.current) {
+        viewerRef.current.stop();
+        viewerRef.current = null;
+      }
+      return;
+    }
+
+    // Connect as viewer to receive broadcast stream if another device is broadcasting
+    try {
+      viewerRef.current = connectToBroadcast(
+        camera?.id || 'CAM-01',
+        (remoteStream) => {
+          if (videoRef.current && !useWebcam) {
+            videoRef.current.srcObject = remoteStream;
+            videoRef.current.play().catch(() => {});
+            setIsReceivingStream(true);
+            setFaceDetectionActive(true);
+          }
+        },
+        () => {
+          setIsReceivingStream(false);
+        }
+      );
+    } catch {/* ignore */}
+
+    return () => {
+      if (viewerRef.current) {
+        viewerRef.current.stop();
+        viewerRef.current = null;
+      }
+    };
+  }, [useWebcam, camera?.id]);
 
   // ─── Queue Standing Area / Detection Zone Canvas Overlay ───────────────────
   useEffect(() => {
@@ -328,10 +388,10 @@ export function LiveCameraCard({ camera, onTriggerViolation, isDisplayMode = fal
   };
 
   useEffect(() => {
-    if (faceDetectionActive && useWebcam) startFaceDetectionLoop();
+    if (faceDetectionActive && (useWebcam || isReceivingStream)) startFaceDetectionLoop();
     else stopFaceDetectionLoop();
     return stopFaceDetectionLoop;
-  }, [faceDetectionActive, useWebcam, faceModelsReady, students, zoneX, zoneY, zoneWidth, zoneHeight, penaltyPoints, penaltyTime, startFaceDetectionLoop]);
+  }, [faceDetectionActive, useWebcam, isReceivingStream, faceModelsReady, students, zoneX, zoneY, zoneWidth, zoneHeight, penaltyPoints, penaltyTime, startFaceDetectionLoop]);
 
   return (
     <div className={`bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 rounded-3xl overflow-hidden shadow-xl ${isDisplayMode ? 'h-full flex flex-col' : ''}`}>
@@ -347,6 +407,16 @@ export function LiveCameraCard({ camera, onTriggerViolation, isDisplayMode = fal
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {useWebcam && (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-600 text-white text-[10px] font-extrabold tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> BROADCASTING {viewerCount > 0 ? `(${viewerCount} Viewers)` : ''}
+            </span>
+          )}
+          {isReceivingStream && (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" /> CLOUD RELAY
+            </span>
+          )}
           <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-[10px] font-extrabold tracking-wider">
             <span className="w-2 h-2 rounded-full bg-white animate-ping" /> LIVE
           </span>
@@ -356,19 +426,21 @@ export function LiveCameraCard({ camera, onTriggerViolation, isDisplayMode = fal
 
       {/* Video Viewport */}
       <div className={`relative ${isDisplayMode ? 'flex-1' : 'aspect-video'} bg-slate-950 overflow-hidden flex items-center justify-center group`}>
-        {/* Webcam feed */}
+        {/* Webcam or Remote WebRTC feed */}
         <video
           ref={videoRef}
           playsInline
+          autoPlay
           muted
-          className={`w-full h-full object-cover ${useWebcam ? 'block' : 'hidden'} transform -scale-x-100`}
+          className={`w-full h-full object-cover ${(useWebcam || isReceivingStream) ? 'block' : 'hidden'} ${useWebcam ? 'transform -scale-x-100' : ''}`}
         />
 
         {/* Standby placeholder */}
-        {!useWebcam && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 z-0">
+        {!useWebcam && !isReceivingStream && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 z-0 text-center p-4">
             <Video className="w-16 h-16 text-slate-800 animate-pulse mb-2" />
-            <p className="text-xs text-slate-500 font-mono">STANDBY NODE — CLICK "USE WEBCAM" TO ACTIVATE LIVE AI STREAM</p>
+            <p className="text-xs text-slate-400 font-mono font-bold">STANDBY NODE</p>
+            <p className="text-[11px] text-slate-600 font-mono mt-1">CLICK "USE WEBCAM" TO BROADCAST LIVE STREAM TO OTHER DEVICES</p>
           </div>
         )}
 
