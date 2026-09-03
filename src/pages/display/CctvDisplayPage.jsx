@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import camerasData from '../../data/cameras.json';
 import { useStudentDB } from '../../context/StudentDBContext';
 import {
   loadFaceModels,
@@ -18,7 +17,7 @@ import {
 
 export function CctvDisplayPage() {
   const { cameraId } = useParams();
-  const { students, violations, updateStudent, recordViolation, zoneConfig } = useStudentDB();
+  const { students, violations, updateStudent, recordViolation, getCameraZoneConfig, cameras } = useStudentDB();
 
   // State
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
@@ -29,6 +28,7 @@ export function CctvDisplayPage() {
   const [webcamError, setWebcamError] = useState(null);
 
   // Dynamic Queue Zone Parameters from shared Context / Live Admin changes
+  const camZoneConfig = getCameraZoneConfig(cameraId || 'CAM-01');
   const {
     zoneX = 15,
     zoneY = 40,
@@ -36,7 +36,7 @@ export function CctvDisplayPage() {
     zoneHeight = 55,
     penaltyPoints = 15,
     penaltyTime = 5,
-  } = zoneConfig || {};
+  } = camZoneConfig || {};
 
   const videoRef = useRef(null);
   const containerRef = useRef(null);
@@ -47,8 +47,8 @@ export function CctvDisplayPage() {
   const penalizedRecentlyRef = useRef({});
 
   // Active Camera
-  const onlineCameras = camerasData.filter((c) => c.isOnline);
-  const activeCamera = onlineCameras.find((c) => c.id === cameraId) || onlineCameras[0] || camerasData[0];
+  const onlineCameras = (cameras || []).filter((c) => c.isOnline);
+  const activeCamera = onlineCameras.find((c) => c.id === cameraId) || onlineCameras[0] || (cameras && cameras[0]) || { id: 'CAM-01', name: 'Camera 01' };
   const isViolation = activeCamStatus.includes('Cut-In') || activeCamStatus.includes('Violation');
   const recentViolation = violations[0] || null;
 

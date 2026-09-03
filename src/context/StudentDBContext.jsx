@@ -3,11 +3,14 @@ import defaultStudents from '../data/students.json';
 import defaultDepartments from '../data/departments.json';
 import { supabase, isCloudConfigured } from '../utils/supabaseClient';
 
+import defaultCameras from '../data/cameras.json';
+
 const StudentDBContext = createContext();
 
 const STORAGE_KEY_STUDENTS = 'queuesense_students_cache';
 const STORAGE_KEY_DEPTS = 'queuesense_departments_cache';
 const STORAGE_KEY_VIOLATIONS = 'queuesense_violations_cache';
+const STORAGE_KEY_CAMERAS = 'queuesense_cameras_cache';
 const STORAGE_KEY_ZONE = 'queuesense_camera_zone_config';
 
 const DEFAULT_ZONE_CONFIG = {
@@ -59,6 +62,15 @@ function loadInitialViolations() {
   return [];
 }
 
+// Initial fallback loader for cameras
+function loadInitialCameras() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_CAMERAS);
+    if (raw) return JSON.parse(raw);
+  } catch {/* ignore */}
+  return defaultCameras;
+}
+
 // Initial loader for shared camera zone settings
 function loadInitialZoneConfig() {
   try {
@@ -72,8 +84,9 @@ export function StudentDBProvider({ children }) {
   const [departments, setDepartments] = useState(loadInitialDepartments);
   const [students, setStudents] = useState(loadInitialStudents);
   const [violations, setViolations] = useState(loadInitialViolations);
+  const [cameras, setCameras] = useState(loadInitialCameras);
   const [zoneConfig, setZoneConfig] = useState(loadInitialZoneConfig);
-  const [cloudConnected, setCloudConnected] = useState(false);
+  const [cloudConnected, setCloudConnected] = useState(true);
   const [loading, setLoading] = useState(true);
 
   // Sync caches
@@ -90,13 +103,16 @@ export function StudentDBProvider({ children }) {
   }, [violations]);
 
   useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_CAMERAS, JSON.stringify(cameras));
+  }, [cameras]);
+
+  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_ZONE, JSON.stringify(zoneConfig));
   }, [zoneConfig]);
 
   // Update queue zone config for a specific camera (or default) across admin and HDMI display tabs
   const updateZoneConfig = useCallback((newConfig, cameraId = 'CAM-01') => {
     setZoneConfig(prev => {
-      // If updating specific camera or root
       const isCameraSpecific = typeof cameraId === 'string';
       const updated = isCameraSpecific
         ? { ...prev, [cameraId]: { ...(prev[cameraId] || DEFAULT_ZONE_CONFIG), ...newConfig } }
@@ -111,7 +127,6 @@ export function StudentDBProvider({ children }) {
     if (zoneConfig && zoneConfig[cameraId]) {
       return zoneConfig[cameraId];
     }
-    // Fallback to top-level or default
     return {
       zoneX: zoneConfig?.zoneX ?? DEFAULT_ZONE_CONFIG.zoneX,
       zoneY: zoneConfig?.zoneY ?? DEFAULT_ZONE_CONFIG.zoneY,
@@ -122,25 +137,39 @@ export function StudentDBProvider({ children }) {
     };
   }, [zoneConfig]);
 
-  // Listen to cross-tab storage events so changes on Admin tab reflect instantly in Student tab
+  // Update camera details (e.g. stream_url, name, location) in cloud & local state
+  const updateCamera = useCallback(async (cameraId, updates) => {
+    setCameras(prev => prev.map(c => c.id === cameraId ? { ...c, ...updates } : c));
+
+    if (isCloudConfigured && supabase) {
+      try {
+        const cloudPayload = {};
+        if (updates.name) cloudPayload.name = updates.name;
+        if (updates.location) cloudPayload.location = updates.location;
+        if (updates.streamType || updates.stream_type) cloudPayload.stream_type = updates.streamType || updates.stream_type;
+        if (updates.streamUrl !== undefined || updates.stream_url !== undefined) cloudPayload.stream_url = updates.streamUrl ?? updates.stream_url;
+        if (updates.isOnline !== undefined || updates.is_active !== undefined) cloudPayload.is_active = updates.isOnline ?? updates.is_active;
+
+        await supabase.from('cameras').update(cloudPayload).eq('id', cameraId);
+      } catch (err) {
+        console.error('[QueueSense] Failed to update camera in cloud:', err);
+      }
+    }
+  }, []);
+
+  // Listen to cross-tab storage events so changes reflect instantly across tabs
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === STORAGE_KEY_ZONE && e.newValue) {
-        try {
-          setZoneConfig(JSON.parse(e.newValue));
-        } catch {/* skip */}
+        try { setZoneConfig(JSON.parse(e.newValue)); } catch {/* skip */}
       } else if (e.key === STORAGE_KEY_STUDENTS && e.newValue) {
-        try {
-          setStudents(JSON.parse(e.newValue));
-        } catch {/* skip */}
+        try { setStudents(JSON.parse(e.newValue)); } catch {/* skip */}
       } else if (e.key === STORAGE_KEY_DEPTS && e.newValue) {
-        try {
-          setDepartments(JSON.parse(e.newValue));
-        } catch {/* skip */}
+        try { setDepartments(JSON.parse(e.newValue)); } catch {/* skip */}
       } else if (e.key === STORAGE_KEY_VIOLATIONS && e.newValue) {
-        try {
-          setViolations(JSON.parse(e.newValue));
-        } catch {/* skip */}
+        try { setViolations(JSON.parse(e.newValue)); } catch {/* skip */}
+      } else if (e.key === STORAGE_KEY_CAMERAS && e.newValue) {
+        try { setCameras(JSON.parse(e.newValue)); } catch {/* skip */}
       }
     };
 
@@ -162,6 +191,32 @@ export function StudentDBProvider({ children }) {
       
       if (!deptError && deptData && deptData.length > 0) {
         setDepartments(deptData);
+      }
+
+      // Fetch Cameras
+      const { data: camData, error: camError } = await supabase
+        .from('cameras')
+        .select('*')
+        .order('id');
+
+      if (!camError && camData && camData.length > 0) {
+        const mappedCameras = camData.map(c => ({
+          id: c.id,
+          name: c.name,
+          location: c.location,
+          streamType: c.stream_type || 'webcam',
+          streamUrl: c.stream_url || null,
+          isOnline: c.is_active ?? true,
+          fps: c.fps || 30,
+          confidence: Number(c.confidence) || 98.5,
+          status: 'Normal',
+          queueStatus: 'Proper Queue',
+          peopleCount: 0,
+          virtualLineActive: true,
+          lastIncident: 'None today',
+        }));
+        setCameras(mappedCameras);
+        try { localStorage.setItem(STORAGE_KEY_CAMERAS, JSON.stringify(mappedCameras)); } catch {/* ignore */}
       }
 
       // Fetch Students
@@ -217,7 +272,7 @@ export function StudentDBProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [departments]);
 
   // Setup Realtime Subscription on Cloud
   useEffect(() => {
@@ -248,6 +303,9 @@ export function StudentDBProvider({ children }) {
         }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'departments' }, () => {
+        fetchCloudData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cameras' }, () => {
         fetchCloudData();
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'violations' }, (payload) => {
@@ -587,6 +645,8 @@ export function StudentDBProvider({ children }) {
       students,
       departments,
       violations,
+      cameras,
+      updateCamera,
       zoneConfig,
       updateZoneConfig,
       getCameraZoneConfig,
