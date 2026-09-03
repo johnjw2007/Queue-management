@@ -1,19 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Production Supabase Cloud configuration (with environment variable override support)
+const DEFAULT_SUPABASE_URL = 'https://yooomplbpzfryuifgevc.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_U4EMNoyiYvY5yTkmvEpBbA__0tx5K9Q';
 
-if (!supabaseUrl) {
-  throw new Error(
-    'Missing VITE_SUPABASE_URL. Add it to Vercel Environment Variables and redeploy.'
-  );
-}
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
 
-if (!supabaseAnonKey) {
-  throw new Error(
-    'Missing VITE_SUPABASE_ANON_KEY. Add it to Vercel Environment Variables and redeploy.'
-  );
-}
+export const isCloudConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -24,15 +18,21 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 export const testSupabaseConnection = async () => {
-  const { error } = await supabase
-    .from('departments')
-    .select('id')
-    .limit(1);
+  try {
+    const { data, error } = await supabase
+      .from('departments')
+      .select('id')
+      .limit(1);
 
-  if (error) {
-    console.error('Supabase connection/table test failed:', error);
-    return { connected: false, error };
+    if (error) {
+      console.warn('Supabase connection test failed:', error);
+      return { connected: false, error };
+    }
+
+    return { connected: true, error: null, data };
+  } catch (err) {
+    console.warn('Supabase network error:', err);
+    return { connected: false, error: err };
   }
-
-  return { connected: true, error: null };
 };
+
